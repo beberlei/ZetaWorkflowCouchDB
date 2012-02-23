@@ -1,6 +1,6 @@
 <?php
 
-require_once "/home/benny/code/php/wsnetbeans/ezc/trunk/Base/src/base.php";
+require_once "ezc/Base/base.php";
 
 spl_autoload_register(array("ezcBase", "autoload"));
 
