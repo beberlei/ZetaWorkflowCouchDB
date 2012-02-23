@@ -1,0 +1,50 @@
+Zeta Components - Workflow CouchDB Tiein Design
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:Author: Benjamin Eberlei
+
+Introduction
+============
+
+Description
+-----------
+
+The WorkflowCouchDBTiein provides functionalities to load and save workflows into CouchDB
+and to start, save and resume executions by persisting the state into CouchDB.
+
+Benefits of a CouchDB backend over the DatabaseTiein is the non-relational structure of a workflow.
+Each node and execution has different variables, state and dependencies. Additionally a relational
+implementation requires to split the workflow in many different tables, reducing performance during
+save and query operations. CouchDB could save workflow and executions in their own documents
+respectively, requiring only between one and three HTTP calls to CouchDB to fetch and save all the workflow
+related data again.
+
+Additionally having the workflows (+history) and executions in single documents makes the whole
+workflow process much more readable and debugable for developers.
+
+Current implementation
+----------------------
+
+I have a current implementation to figure out some of the problems that might come
+with using CouchDB for workflow and it helped find some problems in Workflow Base
+component that have to be fixed before. However the code is not tested so I will
+probably begin from scratch.
+
+Requirements
+============
+
+The implementation should obviously work exactly like the base or database workflows,
+so that there are no differences using either one.
+
+Design goals
+============
+
+-   A thin HTTP Layer is provided with this component to speak to CouchDB
+    so that no third dependency needs to be introduced.
+-   Workflows, their Nodes and Executions will be assigned CouchDB UUIDs.
+-   Workflows and executions are saved into a single document each.
+-   Time inconsistencies due to changing workflows will be circumvented
+    by saving all versions of the workflow into a substructure and associating
+    each active execution with a workflow id and version.
+-   Document JSON structures are crafted in a way that developers can implement
+    their own queries on various variables of the execution state are possible
+    using CouchDB views.

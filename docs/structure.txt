@@ -1,0 +1,143 @@
+{
+    "type": "zeta_workflow_execution",
+    "workflow_id": 1,
+    "execution_parent": 0,
+    "execution_started": 1234567890,
+    "execution_suspended": false,
+    "variables": {
+        "entity_id": 1234,
+        "foo": "bar",
+        "bar": "baz",
+        "baz": "123456",
+        "struct": {
+            "foo": "bar"
+        }
+    },
+    "waitingFor": {
+        "varName1": {
+            "node": "splobjecthash_y",
+            "conditionData": "serialized condition using serialize()",
+            "condition": "condition __toString() representation",
+            "rootClass": "ezcWorkflowConditionIsEqual",
+            "value": "100"
+        },
+        "varName2": {
+            "node": "splobjecthash_z",
+            "conditionData": "serialized condition using serialize()",
+            "condition": "condition __toString() representation",
+            "rootClass": "ezcWorkflowConditionInArray",
+            "values": ["foo", "bar", "baz"]
+        }
+    },
+    "threads": [{
+            "parentId": 1,
+            "numSiblings": 1
+        }
+    ],
+    "states": [{
+            "nodeId": 1,
+            "data": {
+                "foo": "bar"
+            },
+            "activatedFrom": "ezcWorkflowNodeAction",
+            "threadId": 0
+        }
+    ]
+}
+
+Workflow:
+
+{
+   "_id": "de7cdd4f1ca178ed7c287e6e27285cb7",
+   "type": "zeta_workflow",
+   "name": "my_workflow_slug",
+   "version": 1234,
+   "created": 1234567890,
+   "nodes": {
+        "splobjecthash1": {
+            "class": "ezcWorkflowNodeStart",
+            "configuration": {},
+            "outgoingNodes": ["splobjecthash2"]
+        },
+        "splobjecthash2": {
+            "class": "ezcWorkflowNodeEnd",
+            "configuration": {},
+            "outgoingNodes": []
+        }
+    },
+    "variableHandlers": {
+        "varName1": {
+            "class": "MyFooVarHandler",
+            "args": {}
+        },
+        "varName2": "MyBarVarHandler"
+    }
+}
+
+View: Emit executions for a specific variable `entity_id`
+
+function(doc) {
+    if (doc.type == "zeta_workflow_execution") {
+        emit(doc.
+    }
+}
+
+View: Emit suspended executions by all their waiting for variable names
+
+function(doc) {
+  if (doc.type == "zeta_workflow_execution" && doc.execution_suspended > 0) {
+
+    for(var wfv in doc.waitingFor) {
+      emit(wfv, doc);
+    }
+  }
+}
+
+View: Select all Executions that are waiting for their variable with a specific input value
+evaluated if the variable condition is a comparison condition:
+
+function(doc) {
+  if (doc.type == "zeta_workflow_execution") {
+    for(var wfv in doc.waitingFor) {
+      emit([doc.waitingFor[wfv].rootClass, doc.waitingFor[wfv].condition], doc);
+    }
+  }
+}
+
+This should be optimized, the following condition types should be cloned in javascript code using
+the key as input:
+
+    * ezcWorkflowConditionInArray
+    * ezcWorkflowConditionIsEqual
+    * ezcWorkflowConditionIsEqualOrGreaterThan
+    * ezcWorkflowConditionIsEqualOrLessThan
+    * ezcWorkflowConditionIsGreaterThan
+    * ezcWorkflowConditionIsLessThan
+    * ezcWorkflowConditionIsNotEqual
+
+key=["variable-name", "value"]
+
+function(doc) {
+    if (doc.type == "zeta_workflow_execution") {
+        for(var wfv in doc.waitingFor) {
+            var wfvar = doc.waitingFor[wfv];
+
+            switch (wfvar.rootClass) {
+                case 'ezcWorkflowConditionInArray':
+                    for (var i in wfvar.values) {
+                        emit([wfv, wfvar.rootClass, wfvar.values[i]], doc);
+                    }
+                    break;
+                case 'ezcWorkflowConditionIsEqual':
+                case 'ezcWorkflowConditionIsEqualOrGreaterThan':
+                case 'ezcWorkflowConditionIsEqualOrLessThan':
+                case 'ezcWorkflowConditionIsGreaterThan':
+                case 'ezcWorkflowConditionIsLessThan':
+                case 'ezcWorkflowConditionIsNotEqual':
+                    emit([wfv, wfvar.rootClass, wfvar.value], doc);
+                    break;
+            }
+        }
+    }
+}
+
